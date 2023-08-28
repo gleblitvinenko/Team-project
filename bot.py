@@ -11,7 +11,7 @@ dp = Dispatcher(bot)
 
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
-    await message.answer("Start")
+    await message.answer(f"Hello, {message.from_user.first_name}!")
 
 
 if __name__ == "__main__":
