@@ -13,7 +13,9 @@ dp = Dispatcher(bot)
 
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
-    user = User(message.from_user.id)
+    user = User()
+    if not user.user_exists(message.from_user.id):
+        user.create_user(message.from_user.id)
     await message.answer("Start")
 
 
