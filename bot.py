@@ -12,6 +12,7 @@ dp = Dispatcher(bot)
 
 
 @dp.message_handler(commands=["start"])
+'''Function to start the bot'''
 async def start(message: types.Message):
     user = User()
     if not user.user_exists(message.from_user.id):
