@@ -1,12 +1,11 @@
 import sqlite3
 
-
 CREATE_USER_TABLE = """
     CREATE TABLE "user" (
         "id" INTEGER NOT NULL,
         "telegram_id" INTEGER NOT NULL,
         "phone_number" VARCHAR NULL,
-        "reg_date" DATE,
+        "reg_date" DATE DEFAULT (date('now')),
         "is_admin" BOOLEAN DEFAULT 0,
         "first_name" VARCHAR NULL,
         "last_name" VARCHAR NULL,
