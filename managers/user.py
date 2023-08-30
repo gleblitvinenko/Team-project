@@ -22,5 +22,12 @@ class User:
         self.cursor.execute("INSERT INTO user (telegram_id) VALUES (?)", (telegram_id,))
         self.connection.commit()
 
+    def update_profile(self, telegram_id: int, **kwargs) -> None:
+        for key, value in kwargs.items():
+            self.cursor.execute(
+                f"UPDATE user SET {key} = ? WHERE telegram_id = ?", (value, telegram_id)
+            )
+        self.connection.commit()
+
     def __del__(self):
         self.connection.close()
