@@ -34,17 +34,12 @@ CREATE_ITEM_TABLE = """
 
 
 def create_db() -> None:
-    connection = sqlite3.connect("cosmetics_shop.db")
-    cursor = connection.cursor()
-    try:
+    with sqlite3.connect("cosmetics_shop.db") as connection:
+        cursor = connection.cursor()
         cursor.execute(CREATE_USER_TABLE)
         cursor.execute(CREATE_ITEM_CATEGORY_TABLE)
         cursor.execute(CREATE_ITEM_TABLE)
         connection.commit()
-    except Exception as e:
-        print(e)
-
-    connection.close()
 
 
 if __name__ == "__main__":
