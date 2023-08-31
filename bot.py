@@ -1,10 +1,12 @@
 import os
 
 from aiogram import Bot, Dispatcher, executor, types
+from aiogram.dispatcher import FSMContext
 from dotenv import load_dotenv
 
 from managers.item_category import ItemCategory
 from managers.user import User
+from templates.inline_buttons import share_phone_number_inline
 from templates.inline_buttons import generate_inline_markup
 
 load_dotenv()
@@ -17,48 +19,33 @@ user_data = {}
 user = User()
 
 
+# ToDo: make Profile inline button prototype
+
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
     if not user.user_exists(message.from_user.id):
         user.create_user(message.from_user.id)
-        await message.answer(
-            f"Welcome, {message.from_user.username}! Let's get to know you better."
-        )
-        await message.answer("Please provide your first name:")
-        user_data[message.from_user.id] = {"state": "waiting_first_name"}
+        await message.answer(f"Welcome, {message.from_user.username}!")
+    else:
+        await message.answer(f"Welcome back, {message.from_user.username}!")
+    phone_number = user.check_field(message.from_user.id, "phone_number")
+    if not phone_number:
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        keyboard.add(types.KeyboardButton(text=share_phone_number_inline, request_contact=True))
+
+        await message.answer("Please share your phone number with me.", reply_markup=keyboard)
+        user_data[message.from_user.id] = {"state": "waiting_phone_number"}
 
 
 @dp.message_handler(
-    lambda message: user_data.get(message.from_user.id, {}).get("state")
-    == "waiting_first_name"
+    content_types=types.ContentType.CONTACT,
 )
-async def get_first_name(message: types.Message):
-    user_data[message.from_user.id]["first_name"] = message.text
-    user.update_profile(message.from_user.id, first_name=message.text)
-    await message.answer("Great! Now please provide your last name:")
-    user_data[message.from_user.id]["state"] = "waiting_last_name"
-
-
-@dp.message_handler(
-    lambda message: user_data.get(message.from_user.id, {}).get("state")
-    == "waiting_last_name"
-)
-async def get_last_name(message: types.Message):
-    user_data[message.from_user.id]["last_name"] = message.text
-    user.update_profile(message.from_user.id, last_name=message.text)
-    await message.answer("Awesome! Now please provide your phone number:")
-    user_data[message.from_user.id]["state"] = "waiting_phone_number"
-
-
-@dp.message_handler(
-    lambda message: user_data.get(message.from_user.id, {}).get("state")
-    == "waiting_phone_number"
-)
-async def get_phone_number(message: types.Message):
-    user_data[message.from_user.id]["phone_number"] = message.text
-    user.update_profile(message.from_user.id, phone_number=message.text)
-    await message.answer("Thank you! Your profile is complete.")
+async def get_phone_number(message: types.Message, state: FSMContext):
+    user_data[message.from_user.id]["phone_number"] = message.contact.phone_number
+    user.update_profile(message.from_user.id, phone_number=message.contact.phone_number)
+    await message.answer("Thank you! Your phone number has been saved.", reply_markup=types.ReplyKeyboardRemove())
     user_data[message.from_user.id]["state"] = "complete"
+    await state.finish()
 
 
 @dp.message_handler(commands=["test_categories"])

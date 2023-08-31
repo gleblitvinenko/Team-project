@@ -2,7 +2,7 @@ from aiogram import types
 
 
 def generate_inline_markup(
-    button_titles: list, row_width: int
+        button_titles: list, row_width: int
 ) -> types.InlineKeyboardMarkup:  # TODO pagination implementation
     markup = types.InlineKeyboardMarkup(row_width=row_width)
     row = []
@@ -21,3 +21,12 @@ def generate_inline_markup(
         markup.row(*row)
 
     return markup
+
+
+profile_inline = "📁 Profile"
+item_categories_inline = "🗄️ Item categories"
+faq_inline = "❓ FAQ"
+add_change_first_name_inline = "✏️ Add/Change first name"
+add_change_last_name_inline = "✏️ Add/Change last name"
+add_change_phone_number_inline = "✏️ Add/Change phone number"
+share_phone_number_inline = "Share phone number 📱"
