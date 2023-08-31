@@ -4,7 +4,7 @@ import sqlite3
 from dotenv import load_dotenv
 
 load_dotenv()
-database_path = os.path.join("..", os.getenv("DB_PATH"))
+database_path = os.getenv("DB_PATH")
 
 
 class ItemCategory:
@@ -17,7 +17,3 @@ class ItemCategory:
             "SELECT * FROM 'item category' "
         ).fetchall()
         return [title[-1] for title in categories_titles]  # Will return list of titles
-
-
-ic = ItemCategory()
-print(ic.get_titles())
