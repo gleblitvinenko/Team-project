@@ -63,11 +63,12 @@ async def get_phone_number(message: types.Message):
 
 @dp.message_handler(commands=["test_categories"])
 async def test_categories(message: types.Message):
-    """ TEST FUNCTION"""
+    """TEST FUNCTION"""
     item_categories_manager = ItemCategory()
     item_categories_list = item_categories_manager.get_titles()
     item_categories_markup = generate_inline_markup(item_categories_list, row_width=2)
     await message.answer("Here is categories", reply_markup=item_categories_markup)
+
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)

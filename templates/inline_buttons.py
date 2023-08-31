@@ -2,8 +2,7 @@ from aiogram import types
 
 
 def generate_inline_markup(
-    button_titles: list,
-    row_width: int
+    button_titles: list, row_width: int
 ) -> types.InlineKeyboardMarkup:  # TODO pagination implementation
     markup = types.InlineKeyboardMarkup(row_width=row_width)
     row = []
