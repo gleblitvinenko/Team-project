@@ -2,14 +2,17 @@ from aiogram import types
 
 
 def generate_inline_markup(
-        button_titles: list, row_width: int
+    button_titles: list, row_width: int, button_type: str
 ) -> types.InlineKeyboardMarkup:  # TODO pagination implementation
     markup = types.InlineKeyboardMarkup(row_width=row_width)
     row = []
 
     for button_title in button_titles:
         button = types.InlineKeyboardButton(
-            f"{button_title}", callback_data=f"{button_title}_cb_data"
+            f"{button_title}",
+            callback_data=f"{button_title}_cat_cb_data"
+            if button_type == "category"
+            else f"{button_title}_item_cb_data",
         )
         row.append(button)
 
