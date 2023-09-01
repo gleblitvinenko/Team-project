@@ -26,13 +26,17 @@ async def start(message: types.Message):
         user.create_user(message.from_user.id)
         await message.answer(f"Welcome, {message.from_user.username}!")
     else:
-        await message.answer(f"Welcome back, {message.from_user.username}!")
+        await message.answer(f"Welcome to the shop, {message.from_user.username}!")
     phone_number = user.check_field(message.from_user.id, "phone_number")
     if not phone_number:
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
         keyboard.add(types.KeyboardButton(text=share_phone_number_inline, request_contact=True))
 
         await message.answer("Please share your phone number with me.", reply_markup=keyboard)
+    else:
+        profile_button = types.InlineKeyboardMarkup(row_width=1)
+        profile_button.add(types.InlineKeyboardButton(text="Profile", callback_data="profile"))
+        await message.answer("Here is your menu", reply_markup=profile_button)
 
 
 @dp.message_handler(
@@ -42,6 +46,31 @@ async def get_phone_number(message: types.Message):
     user.update_profile(message.from_user.id, phone_number=message.contact.phone_number)
 
     await message.answer("Thank you! Your phone number has been saved.", reply_markup=types.ReplyKeyboardRemove())
+    await start(message)
+
+
+@dp.callback_query_handler(lambda query: query.data.startswith("profile"))
+async def profile_menu(callback_query: types.CallbackQuery):
+    user_id = callback_query.from_user.id
+    data = callback_query.data
+
+    if data == "profile":
+        nested_markup = types.InlineKeyboardMarkup(row_width=1)
+
+        first_name_button = types.InlineKeyboardButton(text="Add/Change First Name", callback_data="profile_first_name")
+        last_name_button = types.InlineKeyboardButton(text="Add/Change Last Name", callback_data="profile_last_name")
+        phone_number_button = types.InlineKeyboardButton(text="Add/Change Phone Number",
+                                                         callback_data="profile_phone_number")
+        exit_button = types.InlineKeyboardButton(text="Exit", callback_data="profile_exit")
+
+        nested_markup.add(first_name_button, last_name_button, phone_number_button, exit_button)
+
+        await bot.edit_message_text(
+            chat_id=user_id,
+            message_id=callback_query.message.message_id,
+            text="Profile options:",
+            reply_markup=nested_markup,
+        )
 
 
 @dp.message_handler(commands=["test_categories"])
