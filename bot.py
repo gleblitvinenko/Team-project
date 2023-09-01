@@ -20,6 +20,7 @@ user = User()
 
 # ToDo: make Profile inline button prototype
 
+
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
     if not user.user_exists(message.from_user.id):
@@ -30,9 +31,13 @@ async def start(message: types.Message):
     phone_number = user.check_field(message.from_user.id, "phone_number")
     if not phone_number:
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        keyboard.add(types.KeyboardButton(text=share_phone_number_inline, request_contact=True))
+        keyboard.add(
+            types.KeyboardButton(text=share_phone_number_inline, request_contact=True)
+        )
 
-        await message.answer("Please share your phone number with me.", reply_markup=keyboard)
+        await message.answer(
+            "Please share your phone number with me.", reply_markup=keyboard
+        )
 
 
 @dp.message_handler(
@@ -41,7 +46,10 @@ async def start(message: types.Message):
 async def get_phone_number(message: types.Message):
     user.update_profile(message.from_user.id, phone_number=message.contact.phone_number)
 
-    await message.answer("Thank you! Your phone number has been saved.", reply_markup=types.ReplyKeyboardRemove())
+    await message.answer(
+        "Thank you! Your phone number has been saved.",
+        reply_markup=types.ReplyKeyboardRemove(),
+    )
 
 
 @dp.message_handler(commands=["test_categories"])
@@ -51,6 +59,15 @@ async def test_categories(message: types.Message):
     item_categories_list = item_categories_manager.get_titles()
     item_categories_markup = generate_inline_markup(item_categories_list, row_width=2)
     await message.answer("Here is categories", reply_markup=item_categories_markup)
+
+
+@dp.callback_query_handler(lambda query: "_cb_data" in query.data)
+async def show_items_based_on_category(callback_query: types.CallbackQuery):
+    """HANDLER FOR ITEMS & ITEM CATEGORIES"""
+    await bot.send_message(
+        callback_query.from_user.id,
+        text=f"You clicked {callback_query.data.split('_', 1)[0]}",
+    )
 
 
 if __name__ == "__main__":
