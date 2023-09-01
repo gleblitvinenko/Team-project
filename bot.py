@@ -22,11 +22,14 @@ user = User()
 
 @dp.message_handler(commands=["start"])
 async def start(message: types.Message):
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    profile_button = types.InlineKeyboardButton(text="Profile", callback_data="profile")
+    markup.add(profile_button)
     if not user.user_exists(message.from_user.id):
         user.create_user(message.from_user.id)
-        await message.answer(f"Welcome, {message.from_user.username}!")
+        await message.answer(f"Welcome, {message.from_user.username}!", reply_markup=markup)
     else:
-        await message.answer(f"Welcome back, {message.from_user.username}!")
+        await message.answer(f"Welcome back, {message.from_user.username}!", reply_markup=markup)
     phone_number = user.check_field(message.from_user.id, "phone_number")
     if not phone_number:
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
