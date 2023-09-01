@@ -17,6 +17,6 @@ class Item:
                 FROM "item"
                 INNER JOIN "item category" AS category
                 ON item.category = category.id
-                WHERE category.title = '{category_title}';
-            """).fetchall()
+                WHERE category.title = ?;
+            """, (category_title,)).fetchall()
         return [item_title[0] for item_title in item_titles]
