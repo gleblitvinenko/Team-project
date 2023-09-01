@@ -1,5 +1,6 @@
 import os.path
 import sqlite3
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -18,7 +19,9 @@ class Item:
                 INNER JOIN "item category" AS category
                 ON item.category = category.id
                 WHERE category.title = ?;
-            """, (category_title,)).fetchall()
+            """,
+            (category_title,),
+        ).fetchall()
         return [item_title[0] for item_title in item_titles]
 
     def get_item_details_dict_by_item_title(self, item_title: str) -> dict:
@@ -27,13 +30,14 @@ class Item:
             SELECT *
             FROM "item"
             WHERE title = ?
-            """, (item_title,)
+            """,
+            (item_title,),
         ).fetchall()
-        return({
+        return {
             "title": item_details[0][1],
             "id": item_details[0][2],
-            "price": item_details[0][-1]
-        })
+            "price": item_details[0][-1],
+        }
 
 
 # ----- TESTING OUTPUT ⬇️ -----

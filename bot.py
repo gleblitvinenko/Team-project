@@ -6,8 +6,7 @@ from dotenv import load_dotenv
 from managers.item import Item
 from managers.item_category import ItemCategory
 from managers.user import User
-from templates.inline_buttons import (generate_inline_markup,
-                                      share_phone_number_inline)
+from templates.inline_buttons import generate_inline_markup, share_phone_number_inline
 
 load_dotenv()
 
