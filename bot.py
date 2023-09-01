@@ -3,6 +3,7 @@ import os
 from aiogram import Bot, Dispatcher, executor, types
 from dotenv import load_dotenv
 
+from managers.item import Item
 from managers.item_category import ItemCategory
 from managers.user import User
 from templates.inline_buttons import share_phone_number_inline
@@ -65,11 +66,18 @@ async def test_categories(message: types.Message):
 
 @dp.callback_query_handler(lambda query: "_cb_data" in query.data)
 async def show_items_based_on_category(callback_query: types.CallbackQuery):
-    """HANDLER FOR ITEMS & ITEM CATEGORIES"""
-    await bot.send_message(
-        callback_query.from_user.id,
-        text=f"You clicked {callback_query.data.split('_', 1)[0]}",
-    )
+    """HANDLER FOR ITEMS & ITEM CATEGORY BUTTONS"""
+    if callback_query.data.endswith("_cat_cb_data"):
+        category_title = callback_query.data.split('_', 1)[0]
+        item_manager = Item()
+        item_titles_list = item_manager.get_items_titles_list_by_category_title(category_title=category_title)
+        items_markup = generate_inline_markup(button_titles=item_titles_list, row_width=2, button_type="item")
+        await bot.send_message(
+            callback_query.from_user.id,
+            text=f"{callback_query.data.split('_', 1)[0]} category items", reply_markup=items_markup
+        )
+    else:
+        print("Item details")
 
 
 if __name__ == "__main__":
