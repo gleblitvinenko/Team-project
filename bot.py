@@ -72,6 +72,15 @@ async def profile_menu(callback_query: types.CallbackQuery):
             reply_markup=nested_markup,
         )
 
+    if data == "profile_first_name":
+        print("Add/Change First Name clicked")
+    elif data == "profile_last_name":
+        print("Add/Change Last Name clicked")
+    elif data == "profile_phone_number":
+        print("Add/Change Phone Number clicked")
+    elif data == "profile_exit":
+        print("Exit clicked")
+
 
 @dp.message_handler(commands=["test_categories"])
 async def test_categories(message: types.Message):
