@@ -1,7 +1,6 @@
 import os
 
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.dispatcher import FSMContext
 from dotenv import load_dotenv
 
 from managers.item_category import ItemCategory
@@ -34,18 +33,15 @@ async def start(message: types.Message):
         keyboard.add(types.KeyboardButton(text=share_phone_number_inline, request_contact=True))
 
         await message.answer("Please share your phone number with me.", reply_markup=keyboard)
-        user_data[message.from_user.id] = {"state": "waiting_phone_number"}
 
 
 @dp.message_handler(
     content_types=types.ContentType.CONTACT,
 )
-async def get_phone_number(message: types.Message, state: FSMContext):
-    user_data[message.from_user.id]["phone_number"] = message.contact.phone_number
+async def get_phone_number(message: types.Message):
     user.update_profile(message.from_user.id, phone_number=message.contact.phone_number)
+
     await message.answer("Thank you! Your phone number has been saved.", reply_markup=types.ReplyKeyboardRemove())
-    user_data[message.from_user.id]["state"] = "complete"
-    await state.finish()
 
 
 @dp.message_handler(commands=["test_categories"])
