@@ -42,16 +42,16 @@ async def start(message: types.Message):
         await message.answer(f"Welcome to the shop, {message.from_user.username}!")
     else:
         await message.answer(f"Welcome back, {message.from_user.username}!")
-#     await check_get_phone_number(message)
-#
-#
-# @dp.message(F.contact)
-# async def set_phone_number(message: types.Message):
-#     user.update_profile(message.from_user.id, phone_number=message.contact.phone_number)
-#     await message.answer(
-#         "Thank you! Your phone number has been saved.",
-#         reply_markup=types.ReplyKeyboardRemove(),
-#     )
+    await check_get_phone_number(message)
+
+
+@dp.message(F.contact)
+async def set_phone_number(message: types.Message):
+    user.update_profile(message.from_user.id, phone_number=message.contact.phone_number)
+    await message.answer(
+        "Thank you! Your phone number has been saved.",
+        reply_markup=types.ReplyKeyboardRemove(),
+    )
 
 
 async def main():
