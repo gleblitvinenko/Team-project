@@ -1,12 +1,27 @@
+import math
+
 from aiogram import types
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
 def generate_inline_markup(
-    button_titles: list, row_width: int, button_type: str
+    button_titles: list,
+    row_width: int,
+    button_type: str,
+    elements_on_page: int = 2,
+    current_page: int = 1,
 ) -> InlineKeyboardBuilder:  # TODO pagination implementation
     builder = InlineKeyboardBuilder()
     row = []
+
+    pagination_row = [
+        types.InlineKeyboardButton(text="⬅️", callback_data="previous_page"),
+        types.InlineKeyboardButton(
+            text=f"{current_page}/{math.ceil(len(button_titles) / elements_on_page)}",
+            callback_data="current_page",
+        ),
+        types.InlineKeyboardButton(text="➡️", callback_data="next_page"),
+    ]
 
     for button_title in button_titles:
         button = types.InlineKeyboardButton(
@@ -23,6 +38,8 @@ def generate_inline_markup(
 
     if row:
         builder.row(*row)
+
+    builder.row(*pagination_row)
 
     return builder
 
