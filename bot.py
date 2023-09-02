@@ -10,15 +10,15 @@ from dotenv import load_dotenv
 from managers.item import Item
 from managers.item_category import ItemCategory
 from managers.user import User
-from templates.inline_buttons import generate_inline_markup, share_phone_number_inline
+from templates.inline_buttons import generate_inline_markup
 from templates import text_templates as tt
 
 load_dotenv()
 
+router = Router()
 user = User()
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
-router = Router()
 
 
 # ToDo: make Profile inline button prototype
@@ -28,7 +28,11 @@ async def check_get_phone_number(message: types.Message):
     phone_number = user.check_field(message.from_user.id, "phone_number")
     if not phone_number:
         kb = [
-            [types.KeyboardButton(text=share_phone_number_inline, request_contact=True)]
+            [
+                types.KeyboardButton(
+                    text=tt.share_phone_number_inline, request_contact=True
+                )
+            ]
         ]
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, keyboard=kb)
         await message.answer(
@@ -65,17 +69,17 @@ async def profile_inline_button(message: types.Message):
                 [
                     types.InlineKeyboardButton(
                         text=tt.add_change_first_name_inline,
-                        callback_data="add_change_first_name_cb_data",
+                        callback_data="add_change_first_name_settings",
                     ),
                     types.InlineKeyboardButton(
                         text=tt.add_change_last_name_inline,
-                        callback_data="add_change_last_name_cb_data",
+                        callback_data="add_change_last_name_settings",
                     ),
                 ],
                 [
                     types.InlineKeyboardButton(
                         text=tt.add_change_phone_number_inline,
-                        callback_data="add_change_phone_number_cb_data",
+                        callback_data="add_change_phone_number_settings",
                     ),
                 ],
             ],
@@ -83,26 +87,26 @@ async def profile_inline_button(message: types.Message):
     )
 
 
-@router.callback_query(F.data.endswith("_cb_data"))
+@router.callback_query(F.data.endswith("_settings"))
 async def profile_inline_button(callback_query: types.CallbackQuery):
-    if callback_query.data.endswith("_first_name_cb_data"):
+    if callback_query.data.endswith("_first_name_settings"):
         await callback_query.message.answer(
             text="Please enter your first name:",
             reply_markup=types.ForceReply(),
         )
-    elif callback_query.data.endswith("_last_name_cb_data"):
+    elif callback_query.data.endswith("_last_name_settings"):
         await callback_query.message.answer(
             text="Please enter your last name:",
             reply_markup=types.ForceReply(),
         )
-    elif callback_query.data.endswith("_phone_number_cb_data"):
+    elif callback_query.data.endswith("_phone_number_settings"):
         await callback_query.message.answer(
             text="Please enter your phone number:",
             reply_markup=types.ForceReply(),
         )
 
 
-@router.message()
+@router.message(F.reply_to_message)
 async def set_profile_field(message: types.Message):
     if message.reply_to_message.text == "Please enter your first name:":
         user.update_profile(message.from_user.id, first_name=message.text)
@@ -171,7 +175,7 @@ async def show_items_based_on_category(callback_query: types.CallbackQuery):
 
 
 async def main():
-    dp.include_routers(router)
+    dp.include_router(router)
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
