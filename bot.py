@@ -3,8 +3,7 @@ import os
 
 from aiogram.filters import Command
 
-from aiogram.fsm.context import FSMContext
-from aiogram import Bot, Dispatcher, types, Router, F
+from aiogram import Bot, Dispatcher, types, F
 from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
@@ -12,6 +11,7 @@ from managers.item import Item
 from managers.item_category import ItemCategory
 from managers.user import User
 from templates.inline_buttons import generate_inline_markup, share_phone_number_inline
+from templates import text_templates as tt
 
 load_dotenv()
 
@@ -51,6 +51,34 @@ async def set_phone_number(message: types.Message):
     await message.answer(
         "Thank you! Your phone number has been saved.",
         reply_markup=types.ReplyKeyboardRemove(),
+    )
+
+
+@dp.message(Command("profile"))
+async def profile_inline_button(message: types.Message):
+    await message.answer(
+        text=tt.profile_inline,
+        reply_markup=types.InlineKeyboardMarkup(
+            row_width=10,
+            inline_keyboard=[
+                [
+                    types.InlineKeyboardButton(
+                        text=tt.add_change_first_name_inline,
+                        callback_data="add_change_first_name_cb_data",
+                    ),
+                    types.InlineKeyboardButton(
+                        text=tt.add_change_last_name_inline,
+                        callback_data="add_change_last_name_cb_data",
+                    ),
+                ],
+                [
+                    types.InlineKeyboardButton(
+                        text=tt.add_change_phone_number_inline,
+                        callback_data="add_change_phone_number_cb_data",
+                    ),
+                ],
+            ],
+        ),
     )
 
 
@@ -101,6 +129,7 @@ async def show_items_based_on_category(callback_query: types.CallbackQuery):
 
 
 async def main():
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 
