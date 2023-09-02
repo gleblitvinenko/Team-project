@@ -82,6 +82,25 @@ async def profile_inline_button(message: types.Message):
     )
 
 
+@dp.callback_query(F.data.endswith("_cb_data"))
+async def profile_inline_button(callback_query: types.CallbackQuery):
+    if callback_query.data.endswith("_first_name_cb_data"):
+        await callback_query.message.answer(
+            text="Please enter your first name:",
+            reply_markup=types.ForceReply(),
+        )
+    elif callback_query.data.endswith("_last_name_cb_data"):
+        await callback_query.message.answer(
+            text="Please enter your last name:",
+            reply_markup=types.ForceReply(),
+        )
+    elif callback_query.data.endswith("_phone_number_cb_data"):
+        await callback_query.message.answer(
+            text="Please enter your phone number:",
+            reply_markup=types.ForceReply(),
+        )
+
+
 @dp.message(Command("test_categories"))
 async def test_categories(message: types.Message):
     """TEST FUNCTION"""
