@@ -3,7 +3,7 @@ import os
 
 from aiogram.filters import Command
 
-from aiogram import Bot, Dispatcher, types, F
+from aiogram import Bot, Dispatcher, types, F, Router
 from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
@@ -18,6 +18,7 @@ load_dotenv()
 user = User()
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
+router = Router()
 
 
 # ToDo: make Profile inline button prototype
@@ -35,7 +36,7 @@ async def check_get_phone_number(message: types.Message):
         )
 
 
-@dp.message(Command("start"))
+@router.message(Command("start"))
 async def start(message: types.Message):
     if not user.user_exists(message.from_user.id):
         user.create_user(message.from_user.id)
@@ -45,7 +46,7 @@ async def start(message: types.Message):
     await check_get_phone_number(message)
 
 
-@dp.message(F.contact)
+@router.message(F.contact)
 async def set_phone_number(message: types.Message):
     user.update_profile(message.from_user.id, phone_number=message.contact.phone_number)
     await message.answer(
@@ -54,7 +55,7 @@ async def set_phone_number(message: types.Message):
     )
 
 
-@dp.message(Command("profile"))
+@router.message(Command("profile"))
 async def profile_inline_button(message: types.Message):
     await message.answer(
         text=tt.profile_inline,
@@ -82,7 +83,7 @@ async def profile_inline_button(message: types.Message):
     )
 
 
-@dp.callback_query(F.data.endswith("_cb_data"))
+@router.callback_query(F.data.endswith("_cb_data"))
 async def profile_inline_button(callback_query: types.CallbackQuery):
     if callback_query.data.endswith("_first_name_cb_data"):
         await callback_query.message.answer(
@@ -101,7 +102,7 @@ async def profile_inline_button(callback_query: types.CallbackQuery):
         )
 
 
-@dp.message(Command("test_categories"))
+@router.message(Command("test_categories"))
 async def test_categories(message: types.Message):
     """TEST FUNCTION"""
     item_categories_manager = ItemCategory()
@@ -114,7 +115,7 @@ async def test_categories(message: types.Message):
     )
 
 
-@dp.callback_query(F.data.endswith("_cb_data"))
+@router.callback_query(F.data.endswith("_cb_data"))
 async def show_items_based_on_category(callback_query: types.CallbackQuery):
     """HANDLER FOR ITEMS & ITEM CATEGORY BUTTONS"""
     item_manager = Item()
@@ -148,6 +149,7 @@ async def show_items_based_on_category(callback_query: types.CallbackQuery):
 
 
 async def main():
+    dp.include_routers(router)
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
