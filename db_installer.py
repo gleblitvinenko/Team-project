@@ -25,6 +25,7 @@ CREATE_ITEM_CATEGORY_TABLE = """
 CREATE_ITEM_TABLE = """
     CREATE TABLE IF NOT EXISTS "item" (
     "id" INTEGER PRIMARY KEY,
+    "title" VARCHAR,
     "item_id" INTEGER NOT NULL UNIQUE,
     "category" INTEGER,
     "price" DECIMAL,
