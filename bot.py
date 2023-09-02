@@ -102,6 +102,28 @@ async def profile_inline_button(callback_query: types.CallbackQuery):
         )
 
 
+@router.message()
+async def set_profile_field(message: types.Message):
+    if message.reply_to_message.text == "Please enter your first name:":
+        user.update_profile(message.from_user.id, first_name=message.text)
+        await message.answer(
+            "Thank you! Your first name has been saved.",
+            reply_markup=types.ReplyKeyboardRemove(),
+        )
+    elif message.reply_to_message.text == "Please enter your last name:":
+        user.update_profile(message.from_user.id, last_name=message.text)
+        await message.answer(
+            "Thank you! Your last name has been saved.",
+            reply_markup=types.ReplyKeyboardRemove(),
+        )
+    elif message.reply_to_message.text == "Please enter your phone number:":
+        user.update_profile(message.from_user.id, phone_number=message.text)
+        await message.answer(
+            "Thank you! Your phone number has been saved.",
+            reply_markup=types.ReplyKeyboardRemove(),
+        )
+
+
 @router.message(Command("test_categories"))
 async def test_categories(message: types.Message):
     """TEST FUNCTION"""
