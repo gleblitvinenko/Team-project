@@ -1,15 +1,16 @@
 from aiogram import types
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
 def generate_inline_markup(
     button_titles: list, row_width: int, button_type: str
-) -> types.InlineKeyboardMarkup:  # TODO pagination implementation
-    markup = types.InlineKeyboardMarkup(row_width=row_width)
+) -> InlineKeyboardBuilder:  # TODO pagination implementation
+    builder = InlineKeyboardBuilder()
     row = []
 
     for button_title in button_titles:
         button = types.InlineKeyboardButton(
-            f"{button_title}",
+            text=f"{button_title}",
             callback_data=f"{button_title}_cat_cb_data"
             if button_type == "category"
             else f"{button_title}_item_cb_data",
@@ -17,13 +18,13 @@ def generate_inline_markup(
         row.append(button)
 
         if len(row) == row_width:
-            markup.row(*row)
+            builder.row(*row)
             row.clear()
 
     if row:
-        markup.row(*row)
+        builder.row(*row)
 
-    return markup
+    return builder
 
 
 profile_inline = "📁 Profile"

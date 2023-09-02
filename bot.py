@@ -1,6 +1,8 @@
+import asyncio
 import os
 
-from aiogram import Bot, Dispatcher, executor, types
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.filters import Command
 from dotenv import load_dotenv
 
 from managers.item import Item
@@ -10,8 +12,8 @@ from templates.inline_buttons import generate_inline_markup, share_phone_number_
 
 load_dotenv()
 
-bot = Bot(token=os.getenv("BOT_TOKEN"))
-dp = Dispatcher(bot)
+bot = Bot(token=os.getenv("BOT_TOKEN"), parse_mode="HTML")
+dp = Dispatcher()
 
 user_data = {}
 
@@ -21,7 +23,7 @@ user = User()
 # ToDo: make Profile inline button prototype
 
 
-@dp.message_handler(commands=["start"])
+@dp.message(Command("start"))
 async def start(message: types.Message):
     if not user.user_exists(message.from_user.id):
         user.create_user(message.from_user.id)
@@ -40,9 +42,7 @@ async def start(message: types.Message):
         )
 
 
-@dp.message_handler(
-    content_types=types.ContentType.CONTACT,
-)
+@dp.message(F.user_shared)
 async def get_phone_number(message: types.Message):
     user.update_profile(message.from_user.id, phone_number=message.contact.phone_number)
 
@@ -52,7 +52,7 @@ async def get_phone_number(message: types.Message):
     )
 
 
-@dp.message_handler(commands=["test_categories"])
+@dp.message(Command("test_categories"))
 async def test_categories(message: types.Message):
     """TEST FUNCTION"""
     item_categories_manager = ItemCategory()
@@ -60,10 +60,12 @@ async def test_categories(message: types.Message):
     item_categories_markup = generate_inline_markup(
         item_categories_list, row_width=2, button_type="category"
     )
-    await message.answer("Here is categories", reply_markup=item_categories_markup)
+    await message.answer(
+        "Here is categories", reply_markup=item_categories_markup.as_markup()
+    )
 
 
-@dp.callback_query_handler(lambda query: "_cb_data" in query.data)
+@dp.callback_query(F.data.endswith("_cb_data"))
 async def show_items_based_on_category(callback_query: types.CallbackQuery):
     """HANDLER FOR ITEMS & ITEM CATEGORY BUTTONS"""
     item_manager = Item()
@@ -76,18 +78,16 @@ async def show_items_based_on_category(callback_query: types.CallbackQuery):
         items_markup = generate_inline_markup(
             button_titles=item_titles_list, row_width=2, button_type="item"
         )
-        await bot.send_message(
-            callback_query.from_user.id,
+        await callback_query.message.answer(
             text=f"{callback_query.data.split('_', 1)[0]} category items",
-            reply_markup=items_markup,
+            reply_markup=items_markup.as_markup(),
         )
     elif callback_query.data.endswith("_item_cb_data"):
         item_title = callback_query.data.split("_", 1)[0]
         item_details_dict = item_manager.get_item_details_dict_by_item_title(
             item_title=item_title
         )
-        await bot.send_message(
-            callback_query.from_user.id,
+        await callback_query.message.answer(
             text=f"""
 ℹ️ Item Title: {item_details_dict.get("title")}
 
@@ -98,5 +98,10 @@ async def show_items_based_on_category(callback_query: types.CallbackQuery):
         )
 
 
+async def main():
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot)
+
+
 if __name__ == "__main__":
-    executor.start_polling(dp, skip_updates=True)
+    asyncio.run(main())
