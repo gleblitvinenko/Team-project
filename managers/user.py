@@ -22,6 +22,7 @@ class User:
         result = self.cursor.execute(
             f"SELECT {field} FROM user WHERE telegram_id = ?", (telegram_id,)
         ).fetchone()
+        print(result)
         return result[0] is not None
 
     def create_user(self, telegram_id: int) -> None:
