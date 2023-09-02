@@ -78,8 +78,10 @@ async def show_items_based_on_category(callback_query: types.CallbackQuery):
         items_markup = generate_inline_markup(
             button_titles=item_titles_list, row_width=2, button_type="item"
         )
-        await callback_query.message.answer(
-            text=f"{callback_query.data.split('_', 1)[0]} category items",
+        await bot.edit_message_text(
+            chat_id=callback_query.message.chat.id,
+            message_id=callback_query.message.message_id,
+            text=f"{category_title} category items",
             reply_markup=items_markup.as_markup(),
         )
     elif callback_query.data.endswith("_item_cb_data"):
@@ -87,7 +89,9 @@ async def show_items_based_on_category(callback_query: types.CallbackQuery):
         item_details_dict = item_manager.get_item_details_dict_by_item_title(
             item_title=item_title
         )
-        await callback_query.message.answer(
+        await bot.edit_message_text(
+            chat_id=callback_query.message.chat.id,
+            message_id=callback_query.message.message_id,
             text=f"""
 ℹ️ Item Title: {item_details_dict.get("title")}
 
