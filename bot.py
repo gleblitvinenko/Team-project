@@ -21,9 +21,6 @@ bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 
 
-# ToDo: make Profile inline button prototype
-
-
 async def check_get_phone_number(message: types.Message):
     phone_number = user.check_field(message.from_user.id, "phone_number")
     if not phone_number:
@@ -44,22 +41,24 @@ async def check_get_phone_number(message: types.Message):
 async def start(message: types.Message):
     if not user.user_exists(message.from_user.id):
         user.create_user(message.from_user.id)
-        await message.answer(f"Welcome to the shop, {message.from_user.username}!")
+        await message.answer(text=f"Welcome to the shop,{message.from_user.username}!")
     else:
-        await message.answer(f"Welcome back, {message.from_user.username}!")
+        await message.answer(text=f"Welcome back,{message.from_user.username}!")
     await check_get_phone_number(message)
 
 
 @router.message(F.contact)
 async def set_phone_number(message: types.Message):
-    user.update_profile(message.from_user.id, phone_number=message.contact.phone_number)
+    user.update_profile(
+        telegram_id=message.from_user.id, phone_number=message.contact.phone_number
+    )
     await message.answer(
-        "Thank you! Your phone number has been saved.",
+        text="Thank you! Your phone number has been saved.",
         reply_markup=types.ReplyKeyboardRemove(),
     )
 
 
-@router.message(Command("profile"))
+@router.message(Command("test_profile"))
 async def profile_inline_button(message: types.Message):
     await message.answer(
         text=tt.profile_inline,
@@ -88,7 +87,7 @@ async def profile_inline_button(message: types.Message):
 
 
 @router.callback_query(F.data.endswith("_settings"))
-async def profile_inline_button(callback_query: types.CallbackQuery):
+async def profile_inline_nested_buttons(callback_query: types.CallbackQuery):
     if callback_query.data.endswith("_first_name_settings"):
         await callback_query.message.answer(
             text="Please enter your first name:",
