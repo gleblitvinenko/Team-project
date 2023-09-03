@@ -25,3 +25,4 @@ def generate_inline_markup(
         builder.row(*row)
 
     return builder
+  
