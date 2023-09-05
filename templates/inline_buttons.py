@@ -3,6 +3,8 @@ import math
 from aiogram import types
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from templates import text_templates as tt
+
 
 def generate_inline_markup(
     button_titles: list,
@@ -51,4 +53,49 @@ def generate_inline_markup(
     builder.row(*pagination_row)
 
     return builder
-  
+
+
+def profile_settings_inline_markup() -> InlineKeyboardBuilder:
+    builder = InlineKeyboardBuilder()
+    profile_settings_buttons = [
+        types.InlineKeyboardButton(
+            text=tt.add_change_first_name_inline,
+            callback_data="add_change_first_name_settings",
+        ),
+        types.InlineKeyboardButton(
+            text=tt.add_change_last_name_inline,
+            callback_data="add_change_last_name_settings",
+        ),
+        types.InlineKeyboardButton(
+            text=tt.add_change_phone_number_inline,
+            callback_data="add_change_phone_number_settings",
+        ),
+    ]
+
+    first_row_buttons = profile_settings_buttons[:2]
+    second_row_buttons = profile_settings_buttons[2:]
+
+    builder.row(*first_row_buttons)
+    builder.row(*second_row_buttons)
+    return builder
+
+
+def menu_inline_markup(row_width: int = 2) -> InlineKeyboardBuilder:
+
+    builder = InlineKeyboardBuilder()
+    row = []
+    for key, value in tt.menu_names_dict.items():
+        button = types.InlineKeyboardButton(
+            text=value,
+            callback_data=f"{key}_menu"
+        )
+        row.append(button)
+
+        if len(row) == row_width:
+            builder.row(*row)
+            row.clear()
+
+    if row:
+        builder.row(*row)
+
+    return builder
