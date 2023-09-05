@@ -1,18 +1,49 @@
+import datetime
+
+from managers.user import User
+
+
 def item_detail_info(*args, **kwargs) -> str:
     item_details = f"""
-    ℹ️ Item Title: {kwargs.get("title")}
+ℹ️ Item Title: {kwargs.get("title")}
 
-    🆔 ID: {kwargs.get("id")}
+🆔 ID: {kwargs.get("id")}
 
-    💰 Price: {kwargs.get("price")}
-    """
+💰 Price: {kwargs.get("price")}
+"""
     return item_details
+
+
+def show_profile_info(telegram_id: int) -> str:
+
+    user_manager = User()
+    profile_info_dict = user_manager.get_info_for_profile(telegram_id=telegram_id)
+
+    profile_info_message = f"""
+🧬 Your profile:
+
+{add_change_first_name_inline}: {profile_info_dict.get("first_name")}
+
+{add_change_last_name_inline}: {profile_info_dict.get("last_name")}
+
+{add_change_phone_number_inline}: {profile_info_dict.get("phone_number")}
+
+{registration_date}: {datetime.datetime.strptime(profile_info_dict.get("reg_date"), "%Y-%m-%d").strftime("%d.%m.%Y")}
+    """
+
+    return profile_info_message
  
- 
-profile_inline = "📁 Profile"
-item_categories_inline = "🗄️ Item categories"
-faq_inline = "❓ FAQ"
-add_change_first_name_inline = "First name"
-add_change_last_name_inline = "Last name"
-add_change_phone_number_inline = "Phone number"
-share_phone_number_inline = "Share phone number 📱"
+
+add_change_first_name_inline = "👤 First name"
+add_change_last_name_inline = "📝 Last name"
+add_change_phone_number_inline = "📱 Phone number"
+registration_date = "📅 Registration date"
+share_phone_number_button = "📱 Share phone number"
+
+menu_names_dict = {
+    "item_categories": "🏷️ Item categories",
+    "profile": "📁 Profile",
+    "cart": "🛒 Cart",
+    "orders": "📦 Orders",
+    "faq": "❓ FAQ",
+}
