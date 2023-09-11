@@ -1,6 +1,5 @@
 import os
 import sqlite3
-import traceback
 
 from dotenv import load_dotenv
 
@@ -161,6 +160,10 @@ class Cart:
             return item_quantity[0]
 
     def get_cart_id_by_user_id(self, telegram_id: int) -> int | None:
+        """
+        Method that returns
+        cart id by user id
+        """
         if self.is_cart_exists(telegram_id=telegram_id):
             user_id = self.get_user_id_by_telegram_id(telegram_id=telegram_id)
             cart_id = self.cursor.execute(
@@ -185,7 +188,6 @@ class Cart:
         if they exist
         """
 
-        user_id = self.get_user_id_by_telegram_id(telegram_id=telegram_id)
         cart_id = self.get_cart_id_by_user_id(telegram_id=telegram_id)
         item_id = self.get_item_id_by_item_title(item_title=item_title)
 
@@ -208,10 +210,8 @@ class Cart:
                     """,
                     (item_quantity_in_table + item_quantity, cart_id, item_id),
                 )
-        except TypeError as ex:
+        except TypeError:
             # CREATING RECORD
-
-            # traceback.print_exception(ex)
             self.cursor.execute(
                 """
                 INSERT INTO "cart item" (cart_id, item_id, quantity)
@@ -228,15 +228,3 @@ class Cart:
 if __name__ == "__main__":
     database_path = os.path.join("..", os.getenv("DB_PATH"))
     cart_manager = Cart()
-    # print(cart_manager.get_items_and_quantities_from_cart_by_telegram_id(531131340))
-    # cart_manager.get_user_id_by_telegram_id(531131340)
-    # cart_manager.create_cart_for_user_by_telegram_id(531131340)
-    # print(cart_manager.is_cart_exists(531131340))
-    # print(cart_manager.get_cart_id_by_user_id(531131340))
-    # print(cart_manager.is_item_in_cart_already_exists(1, 1))
-    # print(cart_manager.get_item_id_by_item_title("Perfumery Item 5"))
-    # print(cart_manager.get_item_quantity_or_none(531131340, "Perfumery Item 1"))
-    # print(cart_manager.get_item_quantity_or_none(531131340, "Perfumery Item 2"))
-    # print(cart_manager.get_item_quantity_or_none(531131340, "Perfumery Item 5"))
-    # cart_manager.add_item_and_quantity_to_user_cart("Perfumery Item 1", 1, 531131340)
-    # cart_manager.add_item_and_quantity_to_user_cart("Perfumery Item 8", 100, 531131340)
