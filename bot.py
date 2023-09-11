@@ -9,6 +9,8 @@ from aiogram import Bot, Dispatcher, types, F, Router
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from dotenv import load_dotenv
+
+from managers.cart import Cart
 from managers.item import Item
 from managers.item_category import ItemCategory
 from managers.user import User
@@ -16,7 +18,8 @@ from managers.user import User
 from templates import text_templates as tt
 from templates.inline_buttons import (
     generate_inline_markup,
-    profile_settings_inline_markup, menu_inline_markup,
+    profile_settings_inline_markup,
+    menu_inline_markup,
 )
 from templates.reply_keyboards import contact_markup
 
@@ -45,14 +48,18 @@ async def check_get_phone_number(message: types.Message):
             "Please share your phone number with me.", reply_markup=contact_markup()
         )
     else:
-        await message.answer(text="Here is your menu", reply_markup=menu_inline_markup().as_markup())
+        await message.answer(
+            text="Here is your menu", reply_markup=menu_inline_markup().as_markup()
+        )
 
 
 @router.message(Command("start"))
 async def start(message: types.Message):
     if not user.user_exists(message.from_user.id):
         user.create_user(message.from_user.id)
-        await message.answer(text=f"Welcome to the shop, {message.from_user.first_name}!")
+        await message.answer(
+            text=f"Welcome to the shop, {message.from_user.first_name}!"
+        )
     else:
         await message.answer(text=f"Welcome back, {message.from_user.first_name}!")
     await check_get_phone_number(message)
@@ -67,7 +74,9 @@ async def set_phone_number(message: types.Message):
         text="Thank you! Your phone number has been saved.",
         reply_markup=types.ReplyKeyboardRemove(),
     )
-    await message.answer(text="Here is your menu", reply_markup=menu_inline_markup().as_markup())
+    await message.answer(
+        text="Here is your menu", reply_markup=menu_inline_markup().as_markup()
+    )
 
 
 @router.callback_query(F.data == "profile_menu")
@@ -78,9 +87,20 @@ async def profile_inline_button(callback_query: types.CallbackQuery):
     )
 
 
-@router.callback_query(F.data.endswith("_settings"))
-async def profile_inline_nested_buttons(callback_query: types.CallbackQuery, state: FSMContext):
+@router.callback_query(F.data == "cart_menu")
+async def show_cart(callback_query: types.CallbackQuery):
+    cart_manager = Cart()
+    user_cart_data = cart_manager.get_items_and_quantities_from_cart_by_telegram_id(
+        callback_query.from_user.id
+    )
+    user_cart_text = tt.get_cart_text(user_cart_data)
+    await callback_query.message.edit_text(text=user_cart_text)
 
+
+@router.callback_query(F.data.endswith("_settings"))
+async def profile_inline_nested_buttons(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
     if callback_query.data.endswith("_first_name_settings"):
         await callback_query.message.edit_text(
             text="Please enter your first name:",
