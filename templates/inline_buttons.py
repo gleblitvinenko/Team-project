@@ -81,14 +81,10 @@ def profile_settings_inline_markup() -> InlineKeyboardBuilder:
 
 
 def menu_inline_markup(row_width: int = 2) -> InlineKeyboardBuilder:
-
     builder = InlineKeyboardBuilder()
     row = []
     for key, value in tt.menu_names_dict.items():
-        button = types.InlineKeyboardButton(
-            text=value,
-            callback_data=f"{key}_menu"
-        )
+        button = types.InlineKeyboardButton(text=value, callback_data=f"{key}_menu")
         row.append(button)
 
         if len(row) == row_width:
@@ -97,5 +93,33 @@ def menu_inline_markup(row_width: int = 2) -> InlineKeyboardBuilder:
 
     if row:
         builder.row(*row)
+
+    return builder
+
+
+def generate_buttons_for_cart_item(item: dict) -> InlineKeyboardBuilder:
+    builder = InlineKeyboardBuilder()
+
+    item_id = item.get("item_id")
+
+    row = [
+        types.InlineKeyboardButton(
+            text="➕",
+            callback_data=f"{item_id}_plus_cart_item"
+        ),
+
+        types.InlineKeyboardButton(
+            text="➖",
+            callback_data=f"{item_id}_minus_cart_item"
+        ),
+
+        types.InlineKeyboardButton(
+            text="⛔ Delete",
+            callback_data=f"{item_id}_delete_cart_item"
+        )
+    ]
+
+    builder.row(*row[:2])
+    builder.row(row[-1])
 
     return builder
