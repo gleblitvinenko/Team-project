@@ -19,7 +19,8 @@ from templates import text_templates as tt
 from templates.inline_buttons import (
     generate_inline_markup,
     profile_settings_inline_markup,
-    menu_inline_markup, generate_full_markup_by_rows_for_cart,
+    menu_inline_markup,
+    generate_full_markup_by_rows_for_cart,
 )
 from templates.reply_keyboards import contact_markup
 
@@ -96,29 +97,30 @@ async def show_cart(callback_query: types.CallbackQuery):
     user_cart_text = tt.get_cart_text(user_cart_data)
     await callback_query.message.edit_text(
         text=user_cart_text,
-        reply_markup=generate_full_markup_by_rows_for_cart(user_cart_data).as_markup()
+        reply_markup=generate_full_markup_by_rows_for_cart(user_cart_data).as_markup(),
     )
 
 
 @router.callback_query(F.data.endswith("_delete_cart_item"))
 async def delete_item_from_cart(callback_query: types.CallbackQuery):
-    item_id, telegram_id = int(callback_query.data.split("_")[0]), callback_query.from_user.id
-    cart_manager = Cart()
-    cart_manager.delete_item_from_cart(
-        telegram_id=telegram_id,
-        item_id=item_id
+    item_id, telegram_id = (
+        int(callback_query.data.split("_")[0]),
+        callback_query.from_user.id,
     )
+    cart_manager = Cart()
+    cart_manager.delete_item_from_cart(telegram_id=telegram_id, item_id=item_id)
     await show_cart(callback_query)
 
 
 @router.callback_query(F.data.endswith("cart_item"))
 async def increase_cart_item_quantity(callback_query: types.CallbackQuery):
-    item_id, operation = int(callback_query.data.split("_")[0]), callback_query.data.split("_")[1]
+    item_id, operation = (
+        int(callback_query.data.split("_")[0]),
+        callback_query.data.split("_")[1],
+    )
     cart_manager = Cart()
     cart_manager.update_item_quantity(
-        telegram_id=callback_query.from_user.id,
-        item_id=item_id,
-        operation=operation
+        telegram_id=callback_query.from_user.id, item_id=item_id, operation=operation
     )
     await show_cart(callback_query)
 
@@ -240,9 +242,7 @@ async def show_item_details(callback_query: types.CallbackQuery):
     item_details_dict = item_manager.get_item_details_dict_by_item_title(
         item_title=item_title
     )
-    await bot.edit_message_text(
-        chat_id=callback_query.message.chat.id,
-        message_id=callback_query.message.message_id,
+    await callback_query.message.edit_text(
         text=tt.item_detail_info(**item_details_dict),
     )
 
@@ -262,9 +262,7 @@ async def click_item_pagination(
         button_type="item",
         current_page=page,
     )
-    await bot.edit_message_text(
-        chat_id=callback_query.message.chat.id,
-        message_id=callback_query.message.message_id,
+    await callback_query.message.edit_text(
         text=f"{category_title} category items",
         reply_markup=items_markup.as_markup(),
     )
