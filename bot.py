@@ -19,7 +19,7 @@ from templates import text_templates as tt
 from templates.inline_buttons import (
     generate_inline_markup,
     profile_settings_inline_markup,
-    menu_inline_markup,
+    menu_inline_markup, generate_buttons_for_cart_item,
 )
 from templates.reply_keyboards import contact_markup
 
@@ -95,6 +95,12 @@ async def show_cart(callback_query: types.CallbackQuery):
     )
     user_cart_text = tt.get_cart_text(user_cart_data)
     await callback_query.message.edit_text(text=user_cart_text)
+
+    for item_dict in user_cart_data:
+        await callback_query.message.answer(
+            text=tt.get_single_cart_item_text(item=item_dict),
+            reply_markup=generate_buttons_for_cart_item(item_dict).as_markup()
+        )
 
 
 @router.callback_query(F.data.endswith("_settings"))
