@@ -19,7 +19,7 @@ from templates import text_templates as tt
 from templates.inline_buttons import (
     generate_inline_markup,
     profile_settings_inline_markup,
-    menu_inline_markup, generate_buttons_for_cart_item,
+    menu_inline_markup, generate_full_markup_by_rows_for_cart,
 )
 from templates.reply_keyboards import contact_markup
 
@@ -94,13 +94,33 @@ async def show_cart(callback_query: types.CallbackQuery):
         callback_query.from_user.id
     )
     user_cart_text = tt.get_cart_text(user_cart_data)
-    await callback_query.message.edit_text(text=user_cart_text)
+    await callback_query.message.edit_text(
+        text=user_cart_text,
+        reply_markup=generate_full_markup_by_rows_for_cart(user_cart_data).as_markup()
+    )
 
-    for item_dict in user_cart_data:
-        await callback_query.message.answer(
-            text=tt.get_single_cart_item_text(item=item_dict),
-            reply_markup=generate_buttons_for_cart_item(item_dict).as_markup()
-        )
+
+@router.callback_query(F.data.endswith("_delete_cart_item"))
+async def delete_item_from_cart(callback_query: types.CallbackQuery):
+    item_id, telegram_id = int(callback_query.data.split("_")[0]), callback_query.from_user.id
+    cart_manager = Cart()
+    cart_manager.delete_item_from_cart(
+        telegram_id=telegram_id,
+        item_id=item_id
+    )
+    await show_cart(callback_query)
+
+
+@router.callback_query(F.data.endswith("cart_item"))
+async def increase_cart_item_quantity(callback_query: types.CallbackQuery):
+    item_id, operation = int(callback_query.data.split("_")[0]), callback_query.data.split("_")[1]
+    cart_manager = Cart()
+    cart_manager.update_item_quantity(
+        telegram_id=callback_query.from_user.id,
+        item_id=item_id,
+        operation=operation
+    )
+    await show_cart(callback_query)
 
 
 @router.callback_query(F.data.endswith("_settings"))
