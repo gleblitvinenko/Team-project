@@ -21,6 +21,7 @@ from templates.inline_buttons import (
     profile_settings_inline_markup,
     menu_inline_markup,
     generate_full_markup_by_rows_for_cart,
+    create_item_info_buttons,
 )
 from templates.reply_keyboards import contact_markup
 
@@ -237,13 +238,29 @@ async def show_items_based_on_category(
 @router.callback_query(F.data.endswith("_item_cb_data"))
 async def show_item_details(callback_query: types.CallbackQuery):
     """HANDLER FOR ITEMS BUTTONS"""
+
     item_manager = Item()
     item_title = callback_query.data.split("_", 1)[0]
     item_details_dict = item_manager.get_item_details_dict_by_item_title(
         item_title=item_title
     )
+
+    item_id = item_details_dict.get("id")
     await callback_query.message.edit_text(
         text=tt.item_detail_info(**item_details_dict),
+        reply_markup=create_item_info_buttons(item_id=item_id),
+    )
+
+
+@router.callback_query(F.data.endswith("_add_item_to_cart"))
+async def add_item_to_cart(callback_query: types.CallbackQuery):
+    print("HELLO")
+    item_id, item_quantity, telegram_id = int(callback_query.data.split("_")[0]), 1, callback_query.from_user.id
+    cart_manager = Cart()
+    cart_manager.add_item_and_quantity_to_user_cart(
+        item_id=item_id,
+        item_quantity=item_quantity,
+        telegram_id=telegram_id
     )
 
 

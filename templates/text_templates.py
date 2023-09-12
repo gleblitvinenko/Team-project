@@ -38,6 +38,7 @@ add_change_last_name_inline = "📝 Last name"
 add_change_phone_number_inline = "📱 Phone number"
 registration_date = "📅 Registration date"
 share_phone_number_button = "📱 Share phone number"
+add_to_cart_button = "➕ Add to cart"
 
 menu_names_dict = {
     "item_categories": "🏷️ Item categories",

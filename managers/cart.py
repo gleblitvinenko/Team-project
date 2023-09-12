@@ -136,7 +136,7 @@ class Cart:
             return item_id[0]
 
     def get_item_quantity_or_none(
-        self, telegram_id: int, item_title: str
+        self, telegram_id: int, item_id: int
     ) -> int | None:
         """
         This method checks
@@ -146,7 +146,6 @@ class Cart:
         """
 
         cart_id = self.get_cart_id_by_user_id(telegram_id=telegram_id)
-        item_id = self.get_item_id_by_item_title(item_title=item_title)
 
         item_quantity = self.cursor.execute(
             """
@@ -179,8 +178,19 @@ class Cart:
             if cart_id is not None:
                 return cart_id[0]
 
+    def get_item_pk_by_item_id(self, item_id: int) -> int:
+        item_pk = self.cursor.execute(
+            """
+            SELECT id
+            FROM "item"
+            WHERE item_id = ?
+            """, (item_id,)
+        ).fetchone()[0]
+
+        return item_pk
+
     def add_item_and_quantity_to_user_cart(
-        self, item_title: str, item_quantity: int, telegram_id: int
+        self, item_id: int, item_quantity: int, telegram_id: int
     ) -> None:
         """
         Method that adds items
@@ -190,14 +200,14 @@ class Cart:
         """
 
         cart_id = self.get_cart_id_by_user_id(telegram_id=telegram_id)
-        item_id = self.get_item_id_by_item_title(item_title=item_title)
+        item_pk = self.get_item_pk_by_item_id(item_id=item_id)
 
-        if item_id is None:
+        if item_pk is None:
             # If by some miracle a non-existent product is got
             return
 
         item_quantity_in_table = self.get_item_quantity_or_none(
-            telegram_id=telegram_id, item_title=item_title
+            telegram_id=telegram_id, item_id=item_pk
         )
 
         try:
@@ -209,7 +219,7 @@ class Cart:
                     SET quantity = ?
                     WHERE cart_id = ? and item_id = ?
                     """,
-                    (item_quantity_in_table + item_quantity, cart_id, item_id),
+                    (item_quantity_in_table + item_quantity, cart_id, item_pk),
                 )
         except TypeError:
             # CREATING RECORD
@@ -219,21 +229,10 @@ class Cart:
                 VALUES (?, ?, ?)
 
                 """,
-                (cart_id, item_id, item_quantity),
+                (cart_id, item_pk, item_quantity),
             )
         finally:
             self.connection.commit()
-
-    def get_item_pk_by_item_id(self, item_id: int) -> int:
-        item_pk = self.cursor.execute(
-            """
-            SELECT id
-            FROM item
-            WHERE item_id = ?
-            """, (item_id,)
-        ).fetchone()[0]
-
-        return item_pk
 
     def update_item_quantity(self, telegram_id: int, item_id: int, operation: str) -> None:
         item_pk = self.get_item_pk_by_item_id(item_id=item_id)

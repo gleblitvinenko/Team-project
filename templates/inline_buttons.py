@@ -102,29 +102,25 @@ def generate_buttons_for_cart_item(item: dict) -> list[types.InlineKeyboardButto
 
     row = [
         types.InlineKeyboardButton(
-            text=f"📌 {item_title}",
-            callback_data=f"{item_id}_cart_item_object"
+            text=f"📌 {item_title}", callback_data=f"{item_id}_cart_item_object"
         ),
         types.InlineKeyboardButton(
-            text="➕",
-            callback_data=f"{item_id}_increment_cart_item"
+            text="➕", callback_data=f"{item_id}_increment_cart_item"
         ),
-
         types.InlineKeyboardButton(
-            text="➖",
-            callback_data=f"{item_id}_decrement_cart_item"
+            text="➖", callback_data=f"{item_id}_decrement_cart_item"
         ),
-
         types.InlineKeyboardButton(
-            text="⛔ Delete",
-            callback_data=f"{item_id}_delete_cart_item"
-        )
+            text="⛔ Delete", callback_data=f"{item_id}_delete_cart_item"
+        ),
     ]
 
     return row
 
 
-def generate_full_markup_by_rows_for_cart(item_dicts_list: list[dict]) -> InlineKeyboardBuilder:
+def generate_full_markup_by_rows_for_cart(
+    item_dicts_list: list[dict],
+) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
 
     for item_dict in item_dicts_list:
@@ -134,3 +130,23 @@ def generate_full_markup_by_rows_for_cart(item_dicts_list: list[dict]) -> Inline
     return builder
 
 
+def create_item_info_buttons(item_id: int) -> types.InlineKeyboardMarkup:
+    markup = types.InlineKeyboardMarkup(
+        row_width=1,
+        inline_keyboard=[
+            [
+                types.InlineKeyboardButton(
+                    text=tt.add_to_cart_button,
+                    callback_data=f"{item_id}_add_item_to_cart",
+                ),
+            ],
+            [
+                types.InlineKeyboardButton(
+                    text=tt.menu_names_dict.get("cart"),
+                    callback_data=f"cart_menu",
+                ),
+            ],
+        ],
+    )
+
+    return markup
