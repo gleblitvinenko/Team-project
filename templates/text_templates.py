@@ -53,8 +53,12 @@ def get_cart_text(items: list[dict]) -> str:
     total_cart_price = 0
     for item_dict in items:
         item_cost = item_dict.get("price") * item_dict.get("quantity")
-        cart_text += f"📌 {item_dict.get('title')} {item_dict.get('price'):.2f} UAH ✖ {item_dict.get('quantity')}  🟰 {item_cost:.2f} UAH \n\n"
+        cart_text += get_single_cart_item_text(item=item_dict)
         total_cart_price += item_cost
 
     cart_text += f"To pay {total_cart_price:.2f} UAH"
     return cart_text
+
+
+def get_single_cart_item_text(item: dict) -> str:
+    return f"📌 {item.get('title')} {item.get('price'):.2f} UAH ✖ {item.get('quantity')}  🟰 {(item.get('price') * item.get('quantity')):.2f} UAH \n\n"
