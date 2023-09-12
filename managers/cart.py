@@ -17,13 +17,13 @@ class Cart:
     ) -> list[dict]:
         """
         This method gets
-        item title, item price, item quantity in the cart
+        item title, item price, item quantity, item_id in the cart
         for example, to visualize these data in user cart section
         """
 
         items_prices_quantities_list = self.cursor.execute(
             """
-            SELECT "item".title, "item".price, "cart item".quantity
+            SELECT "item".title, "item".price, "cart item".quantity, "item".item_id
             FROM "item"
             INNER JOIN "cart item"
             ON "cart item".item_id = "item".id
@@ -35,16 +35,17 @@ class Cart:
         """,
             (telegram_id,),
         ).fetchall()
-        item_price_quantity_list_of_tuples = []
+        item_price_quantity_list_of_dicts = []
         for item_price_quantity_tuple in items_prices_quantities_list:
             temp_dict = {
                 "title": item_price_quantity_tuple[0],
                 "price": item_price_quantity_tuple[1],
                 "quantity": item_price_quantity_tuple[2],
+                "item_id": item_price_quantity_tuple[3],
             }
-            item_price_quantity_list_of_tuples.append(temp_dict.copy())
+            item_price_quantity_list_of_dicts.append(temp_dict.copy())
             temp_dict.clear()
-        return item_price_quantity_list_of_tuples
+        return item_price_quantity_list_of_dicts
 
     def get_user_id_by_telegram_id(self, telegram_id: int) -> int:
         """
