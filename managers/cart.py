@@ -224,6 +224,60 @@ class Cart:
         finally:
             self.connection.commit()
 
+    def get_item_pk_by_item_id(self, item_id: int) -> int:
+        item_pk = self.cursor.execute(
+            """
+            SELECT id
+            FROM item
+            WHERE item_id = ?
+            """, (item_id,)
+        ).fetchone()[0]
+
+        return item_pk
+
+    def update_item_quantity(self, telegram_id: int, item_id: int, operation: str) -> None:
+        item_pk = self.get_item_pk_by_item_id(item_id=item_id)
+
+        cart_id = self.get_cart_id_by_user_id(telegram_id=telegram_id)
+
+        item_quantity = self.cursor.execute(
+            """
+            SELECT quantity
+            FROM "cart item"
+            WHERE item_id = ? AND cart_id = ?
+            """, (item_pk, cart_id)
+        ).fetchone()[0]
+
+        if operation == "increment":
+            item_quantity += 1
+        if operation == "decrement":
+            if item_quantity <= 1:
+                item_quantity = 0
+            else:
+                item_quantity -= 1
+
+        self.cursor.execute(
+            """
+            UPDATE "cart item"
+            SET quantity = ?
+            WHERE item_id = ? AND cart_id = ?
+            """, (item_quantity, item_pk, cart_id)
+        )
+        self.connection.commit()
+
+    def delete_item_from_cart(self, telegram_id: int, item_id: int) -> None:
+        cart_id = self.get_cart_id_by_user_id(telegram_id=telegram_id)
+        item_pk = self.get_item_pk_by_item_id(item_id=item_id)
+
+        self.cursor.execute(
+            """
+            DELETE FROM "cart item"
+            WHERE cart_id = ? AND item_id = ?
+            """, (cart_id, item_pk)
+        )
+
+        self.connection.commit()
+
 
 # ⬇️ TEST STAFF ⬇️
 if __name__ == "__main__":
