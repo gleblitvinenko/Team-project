@@ -39,9 +39,22 @@ class Item:
             "price": item_details[0][-1],
         }
 
+    def get_item_id_by_title(self, title: str) -> int:
+        item_id = self.cursor.execute(
+            """
+            SELECT item_id
+            FROM item
+            WHERE title = ?
+            """,
+            (title,),
+        ).fetchone()[0]
+
+        return item_id
+
 
 # ----- TESTING OUTPUT ⬇️ -----
 if __name__ == "__main__":
     database_path = os.path.join("..", os.getenv("DB_PATH"))
     item = Item()
-    print(item.get_item_details_dict_by_item_title("Perfumery Item 1"))
+    # print(item.get_item_details_dict_by_item_title("Perfumery Item 1"))
+    print(item.get_item_id_by_title("Perfumery Item 1"))
