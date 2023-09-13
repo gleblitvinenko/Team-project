@@ -1,49 +1,60 @@
 import asyncio
 import os
 
-from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 
+from aiogram.filters import Command
 from aiogram import Bot, Dispatcher, types, F, Router
 from aiogram.fsm.storage.memory import MemoryStorage
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
 from managers.item import Item
 from managers.item_category import ItemCategory
 from managers.user import User
-from templates.inline_buttons import generate_inline_markup
+
 from templates import text_templates as tt
+from templates.inline_buttons import (
+    generate_inline_markup,
+    profile_settings_inline_markup, menu_inline_markup,
+)
+from templates.reply_keyboards import contact_markup
 
 load_dotenv()
 
-router = Router()
 user = User()
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
+router = Router()
+
+
+class ItemStates(StatesGroup):
+    pass
+
+
+class ProfileStates(StatesGroup):
+    choosing_first_name = State()
+    choosing_last_name = State()
+    choosing_phone_number = State()
 
 
 async def check_get_phone_number(message: types.Message):
     phone_number = user.check_field(message.from_user.id, "phone_number")
     if not phone_number:
-        kb = [
-            [
-                types.KeyboardButton(
-                    text=tt.share_phone_number_inline, request_contact=True
-                )
-            ]
-        ]
-        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, keyboard=kb)
         await message.answer(
-            "Please share your phone number with me.", reply_markup=keyboard
+            "Please share your phone number with me.", reply_markup=contact_markup()
         )
+    else:
+        await message.answer(text="Here is your menu", reply_markup=menu_inline_markup().as_markup())
 
 
 @router.message(Command("start"))
 async def start(message: types.Message):
     if not user.user_exists(message.from_user.id):
         user.create_user(message.from_user.id)
-        await message.answer(text=f"Welcome to the shop,{message.from_user.username}!")
+        await message.answer(text=f"Welcome to the shop, {message.from_user.first_name}!")
     else:
-        await message.answer(text=f"Welcome back,{message.from_user.username}!")
+        await message.answer(text=f"Welcome back, {message.from_user.first_name}!")
     await check_get_phone_number(message)
 
 
@@ -56,121 +67,183 @@ async def set_phone_number(message: types.Message):
         text="Thank you! Your phone number has been saved.",
         reply_markup=types.ReplyKeyboardRemove(),
     )
+    await message.answer(text="Here is your menu", reply_markup=menu_inline_markup().as_markup())
 
 
-@router.message(Command("test_profile"))
-async def profile_inline_button(message: types.Message):
-    await message.answer(
-        text=tt.profile_inline,
-        reply_markup=types.InlineKeyboardMarkup(
-            row_width=10,
-            inline_keyboard=[
-                [
-                    types.InlineKeyboardButton(
-                        text=tt.add_change_first_name_inline,
-                        callback_data="add_change_first_name_settings",
-                    ),
-                    types.InlineKeyboardButton(
-                        text=tt.add_change_last_name_inline,
-                        callback_data="add_change_last_name_settings",
-                    ),
-                ],
-                [
-                    types.InlineKeyboardButton(
-                        text=tt.add_change_phone_number_inline,
-                        callback_data="add_change_phone_number_settings",
-                    ),
-                ],
-            ],
-        ),
+@router.callback_query(F.data == "profile_menu")
+async def profile_inline_button(callback_query: types.CallbackQuery):
+    await callback_query.message.edit_text(
+        text=tt.show_profile_info(callback_query.from_user.id),
+        reply_markup=profile_settings_inline_markup().as_markup(),
     )
 
 
 @router.callback_query(F.data.endswith("_settings"))
-async def profile_inline_nested_buttons(callback_query: types.CallbackQuery):
+async def profile_inline_nested_buttons(callback_query: types.CallbackQuery, state: FSMContext):
+
     if callback_query.data.endswith("_first_name_settings"):
-        await callback_query.message.answer(
+        await callback_query.message.edit_text(
             text="Please enter your first name:",
-            reply_markup=types.ForceReply(),
         )
+        await state.set_state(ProfileStates.choosing_first_name)
+
     elif callback_query.data.endswith("_last_name_settings"):
-        await callback_query.message.answer(
+        await callback_query.message.edit_text(
             text="Please enter your last name:",
-            reply_markup=types.ForceReply(),
         )
+        await state.set_state(ProfileStates.choosing_last_name)
+
     elif callback_query.data.endswith("_phone_number_settings"):
-        await callback_query.message.answer(
+        await callback_query.message.edit_text(
             text="Please enter your phone number:",
-            reply_markup=types.ForceReply(),
         )
+        await state.set_state(ProfileStates.choosing_phone_number)
 
 
-@router.message(F.reply_to_message)
-async def set_profile_field(message: types.Message):
-    if message.reply_to_message.text == "Please enter your first name:":
-        user.update_profile(message.from_user.id, first_name=message.text)
-        await message.answer(
-            "Thank you! Your first name has been saved.",
-            reply_markup=types.ReplyKeyboardRemove(),
-        )
-    elif message.reply_to_message.text == "Please enter your last name:":
-        user.update_profile(message.from_user.id, last_name=message.text)
-        await message.answer(
-            "Thank you! Your last name has been saved.",
-            reply_markup=types.ReplyKeyboardRemove(),
-        )
-    elif message.reply_to_message.text == "Please enter your phone number:":
-        user.update_profile(message.from_user.id, phone_number=message.text)
-        await message.answer(
-            "Thank you! Your phone number has been saved.",
-            reply_markup=types.ReplyKeyboardRemove(),
-        )
+@router.message(ProfileStates.choosing_first_name)
+async def handle_inputted_first_name(message: types.Message):
+    user.update_profile(message.from_user.id, first_name=message.text.capitalize())
+    await message.answer(
+        "Thank you! Your first name has been successfully saved.",
+    )
+    await message.answer(
+        text=tt.show_profile_info(message.from_user.id),
+        reply_markup=profile_settings_inline_markup().as_markup(),
+    )
 
 
-@router.message(Command("test_categories"))
-async def test_categories(message: types.Message):
-    """TEST FUNCTION"""
+@router.message(ProfileStates.choosing_last_name)
+async def handle_inputted_last_name(message: types.Message):
+    user.update_profile(message.from_user.id, last_name=message.text.capitalize())
+    await message.answer(
+        "Thank you! Your last name has been successfully saved.",
+    )
+    await message.answer(
+        text=tt.show_profile_info(message.from_user.id),
+        reply_markup=profile_settings_inline_markup().as_markup(),
+    )
+
+
+@router.message(ProfileStates.choosing_phone_number)
+async def handle_inputted_phone_number(message: types.Message):
+    user.update_profile(message.from_user.id, phone_number=message.text)
+    await message.answer(
+        "Thank you! Your phone number has been successfully saved.",
+    )
+    await message.answer(
+        text=tt.show_profile_info(message.from_user.id),
+        reply_markup=profile_settings_inline_markup().as_markup(),
+    )
+
+
+@router.callback_query(F.data == "item_categories_menu")
+async def show_categories(
+    callback_query: types.CallbackQuery, page: int = 1, new_message: bool = True
+):
+    """HANDLER MENU BUTTON - 🏷️ Item categories"""
     item_categories_manager = ItemCategory()
     item_categories_list = item_categories_manager.get_titles()
     item_categories_markup = generate_inline_markup(
-        item_categories_list, row_width=2, button_type="category"
+        item_categories_list, row_width=2, button_type="category", current_page=page
     )
-    await message.answer(
-        "Here is categories", reply_markup=item_categories_markup.as_markup()
-    )
+    if new_message:
+        await callback_query.message.edit_text(
+            "Here is categories", reply_markup=item_categories_markup.as_markup()
+        )
+    else:
+        await callback_query.message.edit_text(
+            text="Here is categories",
+            reply_markup=item_categories_markup.as_markup(),
+        )
 
 
-@router.callback_query(F.data.endswith("_cb_data"))
-async def show_items_based_on_category(callback_query: types.CallbackQuery):
-    """HANDLER FOR ITEMS & ITEM CATEGORY BUTTONS"""
+@router.callback_query(F.data.endswith("_cat_cb_data"))
+async def show_items_based_on_category(
+    callback_query: types.CallbackQuery,
+    state: FSMContext,
+    page: int = 1,
+):
+    """HANDLER ITEM CATEGORY BUTTONS"""
     item_manager = Item()
-    if callback_query.data.endswith("_cat_cb_data"):
-        category_title = callback_query.data.split("_", 1)[0]
+    category_title = callback_query.data.split("_", 1)[0]
 
-        item_titles_list = item_manager.get_items_titles_list_by_category_title(
-            category_title=category_title
-        )
-        items_markup = generate_inline_markup(
-            button_titles=item_titles_list, row_width=2, button_type="item"
-        )
-        await callback_query.message.answer(
-            text=f"{callback_query.data.split('_', 1)[0]} category items",
-            reply_markup=items_markup.as_markup(),
-        )
-    elif callback_query.data.endswith("_item_cb_data"):
-        item_title = callback_query.data.split("_", 1)[0]
-        item_details_dict = item_manager.get_item_details_dict_by_item_title(
-            item_title=item_title
-        )
-        await callback_query.message.answer(
-            text=f"""
-ℹ️ Item Title: {item_details_dict.get("title")}
+    await state.update_data(category_title=category_title)
 
-🆔 ID: {item_details_dict.get("id")}
+    item_titles_list = item_manager.get_items_titles_list_by_category_title(
+        category_title=category_title
+    )
+    items_markup = generate_inline_markup(
+        button_titles=item_titles_list,
+        row_width=2,
+        button_type="item",
+        current_page=page,
+    )
+    await bot.edit_message_text(
+        chat_id=callback_query.message.chat.id,
+        message_id=callback_query.message.message_id,
+        text=f"{category_title} category items",
+        reply_markup=items_markup.as_markup(),
+    )
 
-💰 Price: {item_details_dict.get("price")}
-""",
+
+@router.callback_query(F.data.endswith("_item_cb_data"))
+async def show_item_details(callback_query: types.CallbackQuery):
+    """HANDLER FOR ITEMS BUTTONS"""
+    item_manager = Item()
+    item_title = callback_query.data.split("_", 1)[0]
+    item_details_dict = item_manager.get_item_details_dict_by_item_title(
+        item_title=item_title
+    )
+    await bot.edit_message_text(
+        chat_id=callback_query.message.chat.id,
+        message_id=callback_query.message.message_id,
+        text=tt.item_detail_info(**item_details_dict),
+    )
+
+
+async def click_item_pagination(
+    callback_query: types.CallbackQuery, state: FSMContext, page: int
+):
+    item_manager = Item()
+    state_dict = await state.get_data()
+    category_title = state_dict.get("category_title")
+    item_titles_list = item_manager.get_items_titles_list_by_category_title(
+        category_title=category_title
+    )
+    items_markup = generate_inline_markup(
+        button_titles=item_titles_list,
+        row_width=2,
+        button_type="item",
+        current_page=page,
+    )
+    await bot.edit_message_text(
+        chat_id=callback_query.message.chat.id,
+        message_id=callback_query.message.message_id,
+        text=f"{category_title} category items",
+        reply_markup=items_markup.as_markup(),
+    )
+
+
+@router.callback_query(F.data.endswith("_pagination"))
+async def interact_with_pagination_buttons(
+    callback_query: types.CallbackQuery, state: FSMContext
+):
+    data_parts = callback_query.data.split("_")
+    current_page = int(data_parts[0])
+    action = data_parts[2]
+
+    if action == "previous" and "cat" in callback_query.data:
+        await show_categories(
+            callback_query=callback_query, page=current_page, new_message=False
         )
+    elif action == "next" and "cat" in callback_query.data:
+        await show_categories(
+            callback_query=callback_query, page=current_page, new_message=False
+        )
+    elif action == "previous" and "item" in callback_query.data:
+        await click_item_pagination(callback_query, page=current_page, state=state)
+    elif action == "next" and "item" in callback_query.data:
+        await click_item_pagination(callback_query, page=current_page, state=state)
 
 
 async def main():
