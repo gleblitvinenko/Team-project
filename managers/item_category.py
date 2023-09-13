@@ -1,17 +1,7 @@
-import os
-import sqlite3
-
-from dotenv import load_dotenv
-
-load_dotenv()
-database_path = os.getenv("DB_PATH")
+from managers.manager import Manager
 
 
-class ItemCategory:
-    def __init__(self) -> None:
-        self.connection = sqlite3.connect(database_path)
-        self.cursor = self.connection.cursor()
-
+class ItemCategory(Manager):
     def get_titles(self):
         categories_titles = self.cursor.execute(
             "SELECT * FROM 'item category' "

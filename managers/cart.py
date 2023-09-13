@@ -1,17 +1,9 @@
 import os
-import sqlite3
 
-from dotenv import load_dotenv
-
-load_dotenv()
-database_path = os.getenv("DB_PATH")
+from managers.manager import Manager
 
 
-class Cart:
-    def __init__(self):
-        self.connection = sqlite3.connect(database_path)
-        self.cursor = self.connection.cursor()
-
+class Cart(Manager):
     def get_items_and_quantities_from_cart_by_telegram_id(
         self, telegram_id: int
     ) -> list[dict]:
@@ -135,9 +127,7 @@ class Cart:
         if item_id is not None:
             return item_id[0]
 
-    def get_item_quantity_or_none(
-        self, telegram_id: int, item_id: int
-    ) -> int | None:
+    def get_item_quantity_or_none(self, telegram_id: int, item_id: int) -> int | None:
         """
         This method checks
         if item quantity
@@ -184,7 +174,8 @@ class Cart:
             SELECT id
             FROM "item"
             WHERE item_id = ?
-            """, (item_id,)
+            """,
+            (item_id,),
         ).fetchone()[0]
 
         return item_pk
@@ -234,7 +225,9 @@ class Cart:
         finally:
             self.connection.commit()
 
-    def update_item_quantity(self, telegram_id: int, item_id: int, operation: str) -> None:
+    def update_item_quantity(
+        self, telegram_id: int, item_id: int, operation: str
+    ) -> None:
         item_pk = self.get_item_pk_by_item_id(item_id=item_id)
 
         cart_id = self.get_cart_id_by_user_id(telegram_id=telegram_id)
@@ -244,7 +237,8 @@ class Cart:
             SELECT quantity
             FROM "cart item"
             WHERE item_id = ? AND cart_id = ?
-            """, (item_pk, cart_id)
+            """,
+            (item_pk, cart_id),
         ).fetchone()[0]
 
         if operation == "increment":
@@ -260,7 +254,8 @@ class Cart:
             UPDATE "cart item"
             SET quantity = ?
             WHERE item_id = ? AND cart_id = ?
-            """, (item_quantity, item_pk, cart_id)
+            """,
+            (item_quantity, item_pk, cart_id),
         )
         self.connection.commit()
 
@@ -272,7 +267,8 @@ class Cart:
             """
             DELETE FROM "cart item"
             WHERE cart_id = ? AND item_id = ?
-            """, (cart_id, item_pk)
+            """,
+            (cart_id, item_pk),
         )
 
         self.connection.commit()
@@ -280,5 +276,5 @@ class Cart:
 
 # ⬇️ TEST STAFF ⬇️
 if __name__ == "__main__":
-    database_path = os.path.join("..", os.getenv("DB_PATH"))
     cart_manager = Cart()
+    cart_manager.database_path = os.path.join("..", os.getenv("DB_PATH"))
