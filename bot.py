@@ -27,7 +27,12 @@ from templates.reply_keyboards import contact_markup
 
 load_dotenv()
 
-user = User()
+user, cart_manager, item_manager, item_categories_manager = (
+    User(),
+    Cart(),
+    Item(),
+    ItemCategory(),
+)
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 router = Router()
@@ -91,7 +96,9 @@ async def profile_inline_button(callback_query: types.CallbackQuery):
 
 @router.callback_query(F.data == "cart_menu")
 async def show_cart(callback_query: types.CallbackQuery):
-    cart_manager = Cart()
+    """
+    HANDLER THAT PROVIDES OPENING CART - 🛒 Cart
+    """
     user_cart_data = cart_manager.get_items_and_quantities_from_cart_by_telegram_id(
         callback_query.from_user.id
     )
@@ -104,11 +111,13 @@ async def show_cart(callback_query: types.CallbackQuery):
 
 @router.callback_query(F.data.endswith("_delete_cart_item"))
 async def delete_item_from_cart(callback_query: types.CallbackQuery):
+    """
+    HANDLER THAT PROVIDES DELETING ITEMS FROM CART
+    """
     item_id, telegram_id = (
         int(callback_query.data.split("_")[0]),
         callback_query.from_user.id,
     )
-    cart_manager = Cart()
     cart_manager.delete_item_from_cart(telegram_id=telegram_id, item_id=item_id)
     await show_cart(callback_query)
 
@@ -119,7 +128,6 @@ async def increase_cart_item_quantity(callback_query: types.CallbackQuery):
         int(callback_query.data.split("_")[0]),
         callback_query.data.split("_")[1],
     )
-    cart_manager = Cart()
     cart_manager.update_item_quantity(
         telegram_id=callback_query.from_user.id, item_id=item_id, operation=operation
     )
@@ -190,7 +198,6 @@ async def show_categories(
     callback_query: types.CallbackQuery, page: int = 1, new_message: bool = True
 ):
     """HANDLER MENU BUTTON - 🏷️ Item categories"""
-    item_categories_manager = ItemCategory()
     item_categories_list = item_categories_manager.get_titles()
     item_categories_markup = generate_inline_markup(
         item_categories_list, row_width=2, button_type="category", current_page=page
@@ -213,7 +220,6 @@ async def show_items_based_on_category(
     page: int = 1,
 ):
     """HANDLER ITEM CATEGORY BUTTONS"""
-    item_manager = Item()
     category_title = callback_query.data.split("_", 1)[0]
 
     await state.update_data(category_title=category_title)
@@ -238,8 +244,6 @@ async def show_items_based_on_category(
 @router.callback_query(F.data.endswith("_item_cb_data"))
 async def show_item_details(callback_query: types.CallbackQuery):
     """HANDLER FOR ITEMS BUTTONS"""
-
-    item_manager = Item()
     item_title = callback_query.data.split("_", 1)[0]
     item_details_dict = item_manager.get_item_details_dict_by_item_title(
         item_title=item_title
@@ -254,20 +258,19 @@ async def show_item_details(callback_query: types.CallbackQuery):
 
 @router.callback_query(F.data.endswith("_add_item_to_cart"))
 async def add_item_to_cart(callback_query: types.CallbackQuery):
-    print("HELLO")
-    item_id, item_quantity, telegram_id = int(callback_query.data.split("_")[0]), 1, callback_query.from_user.id
-    cart_manager = Cart()
+    item_id, item_quantity, telegram_id = (
+        int(callback_query.data.split("_")[0]),
+        1,
+        callback_query.from_user.id,
+    )
     cart_manager.add_item_and_quantity_to_user_cart(
-        item_id=item_id,
-        item_quantity=item_quantity,
-        telegram_id=telegram_id
+        item_id=item_id, item_quantity=item_quantity, telegram_id=telegram_id
     )
 
 
 async def click_item_pagination(
     callback_query: types.CallbackQuery, state: FSMContext, page: int
 ):
-    item_manager = Item()
     state_dict = await state.get_data()
     category_title = state_dict.get("category_title")
     item_titles_list = item_manager.get_items_titles_list_by_category_title(
