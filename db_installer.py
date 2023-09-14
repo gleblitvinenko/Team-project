@@ -1,7 +1,7 @@
 import sqlite3
 
 CREATE_USER_TABLE = """
-    CREATE TABLE IF NOT EXISTS "user" (
+    CREATE TABLE IF NOT EXISTS "users" (
         "id" INTEGER NOT NULL,
         "telegram_id" INTEGER NOT NULL UNIQUE ,
         "phone_number" VARCHAR NULL,
@@ -15,7 +15,7 @@ CREATE_USER_TABLE = """
 
 
 CREATE_ITEM_CATEGORY_TABLE = """
-    CREATE TABLE IF NOT EXISTS "item category" (
+    CREATE TABLE IF NOT EXISTS "item categories" (
     "id" INTEGER PRIMARY KEY,
     "title" VARCHAR UNIQUE
     )
@@ -23,7 +23,7 @@ CREATE_ITEM_CATEGORY_TABLE = """
 
 
 CREATE_ITEM_TABLE = """
-    CREATE TABLE IF NOT EXISTS "item" (
+    CREATE TABLE IF NOT EXISTS "items" (
     "id" INTEGER PRIMARY KEY,
     "title" VARCHAR,
     "item_id" INTEGER NOT NULL UNIQUE,
