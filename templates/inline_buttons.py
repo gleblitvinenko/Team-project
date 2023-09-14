@@ -12,6 +12,7 @@ def generate_inline_markup(
     button_type: str,
     elements_on_page: int = 2,
     current_page: int = 1,
+    add_back_button: bool = True,
 ) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     row = []
@@ -52,10 +53,15 @@ def generate_inline_markup(
 
     builder.row(*pagination_row)
 
+    if add_back_button:
+        builder.row(back_button)
+
     return builder
 
 
-def profile_settings_inline_markup() -> InlineKeyboardBuilder:
+def profile_settings_inline_markup(
+    add_back_button: bool = True,
+) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
     profile_settings_buttons = [
         types.InlineKeyboardButton(
@@ -77,6 +83,10 @@ def profile_settings_inline_markup() -> InlineKeyboardBuilder:
 
     builder.row(*first_row_buttons)
     builder.row(*second_row_buttons)
+
+    if add_back_button:
+        builder.row(back_button)
+
     return builder
 
 
@@ -119,7 +129,7 @@ def generate_buttons_for_cart_item(item: dict) -> list[types.InlineKeyboardButto
 
 
 def generate_full_markup_by_rows_for_cart(
-    item_dicts_list: list[dict],
+    item_dicts_list: list[dict], add_back_button: bool = True
 ) -> InlineKeyboardBuilder:
     builder = InlineKeyboardBuilder()
 
@@ -127,26 +137,33 @@ def generate_full_markup_by_rows_for_cart(
         builder.row(generate_buttons_for_cart_item(item_dict)[0])
         builder.row(*(generate_buttons_for_cart_item(item_dict)[1:]))
 
+    if add_back_button:
+        builder.row(back_button)
+
     return builder
 
 
-def create_item_info_buttons(item_id: int) -> types.InlineKeyboardMarkup:
-    markup = types.InlineKeyboardMarkup(
-        row_width=1,
-        inline_keyboard=[
-            [
-                types.InlineKeyboardButton(
-                    text=tt.add_to_cart_button,
-                    callback_data=f"{item_id}_add_item_to_cart",
-                ),
-            ],
-            [
-                types.InlineKeyboardButton(
-                    text=tt.menu_names_dict.get("cart"),
-                    callback_data=f"cart_menu",
-                ),
-            ],
-        ],
-    )
+def create_item_info_buttons(
+    item_id: int, add_back_button: bool = True
+) -> InlineKeyboardBuilder:
+    builder = InlineKeyboardBuilder()
+    buttons = [
+        types.InlineKeyboardButton(
+            text=tt.add_to_cart_button,
+            callback_data=f"{item_id}_add_item_to_cart",
+        ),
+        types.InlineKeyboardButton(
+            text=tt.menu_names_dict.get("cart"),
+            callback_data=f"cart_menu",
+        ),
+    ]
+    for button in buttons:
+        builder.row(button)
 
-    return markup
+    if add_back_button:
+        builder.row(back_button)
+
+    return builder
+
+
+back_button = types.InlineKeyboardButton(text=tt.back_button_text, callback_data="back")

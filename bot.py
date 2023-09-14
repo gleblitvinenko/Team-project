@@ -48,6 +48,30 @@ class ProfileStates(StatesGroup):
     choosing_phone_number = State()
 
 
+@router.callback_query(F.data == "back")
+async def press_back_button(callback_query: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    current_step_flag = state_data.get("step_flag", 1)
+    current_step_flag = current_step_flag - 1 if current_step_flag > 1 else 1
+    await state.update_data(step_flag=current_step_flag)
+
+    try:
+        await step_flag_dict.get(current_step_flag)(callback_query.message, new_message=False, state=state)
+    except Exception:
+        await step_flag_dict.get(current_step_flag)(callback_query, new_message=False, state=state)
+
+
+async def show_main_menu(message: types.Message, new_message: bool = True, *args, **kwargs):
+    if new_message:
+        await message.answer(
+            text="Here is your menu", reply_markup=menu_inline_markup().as_markup()
+        )
+    else:
+        await message.edit_text(
+            text="Here is your menu", reply_markup=menu_inline_markup().as_markup()
+        )
+
+
 async def check_get_phone_number(message: types.Message):
     phone_number = user.check_field(message.from_user.id, "phone_number")
     if not phone_number:
@@ -55,9 +79,7 @@ async def check_get_phone_number(message: types.Message):
             "Please share your phone number with me.", reply_markup=contact_markup()
         )
     else:
-        await message.answer(
-            text="Here is your menu", reply_markup=menu_inline_markup().as_markup()
-        )
+        await show_main_menu(message=message)
 
 
 @router.message(Command("start"))
@@ -81,9 +103,7 @@ async def set_phone_number(message: types.Message):
         text="Thank you! Your phone number has been saved.",
         reply_markup=types.ReplyKeyboardRemove(),
     )
-    await message.answer(
-        text="Here is your menu", reply_markup=menu_inline_markup().as_markup()
-    )
+    await show_main_menu(message=message)
 
 
 @router.callback_query(F.data == "profile_menu")
@@ -195,9 +215,13 @@ async def handle_inputted_phone_number(message: types.Message):
 
 @router.callback_query(F.data == "item_categories_menu")
 async def show_categories(
-    callback_query: types.CallbackQuery, page: int = 1, new_message: bool = True
+    callback_query: types.CallbackQuery,
+    state: FSMContext,
+    page: int = 1,
+    new_message: bool = True,
 ):
     """HANDLER MENU BUTTON - 🏷️ Item categories"""
+    await state.update_data(step_flag=2)
     item_categories_list = item_categories_manager.get_titles()
     item_categories_markup = generate_inline_markup(
         item_categories_list, row_width=2, button_type="category", current_page=page
@@ -218,9 +242,16 @@ async def show_items_based_on_category(
     callback_query: types.CallbackQuery,
     state: FSMContext,
     page: int = 1,
+    *args, **kwargs
 ):
     """HANDLER ITEM CATEGORY BUTTONS"""
+    await state.update_data(step_flag=3)
+
     category_title = callback_query.data.split("_", 1)[0]
+
+    if category_title == "back":
+        state_dict = await state.get_data()
+        category_title = state_dict.get("category_title")
 
     await state.update_data(category_title=category_title)
 
@@ -242,8 +273,10 @@ async def show_items_based_on_category(
 
 
 @router.callback_query(F.data.endswith("_item_cb_data"))
-async def show_item_details(callback_query: types.CallbackQuery):
+async def show_item_details(callback_query: types.CallbackQuery, state: FSMContext, *args, **kwargs):
     """HANDLER FOR ITEMS BUTTONS"""
+    await state.update_data(step_flag=4)
+
     item_title = callback_query.data.split("_", 1)[0]
     item_details_dict = item_manager.get_item_details_dict_by_item_title(
         item_title=item_title
@@ -252,7 +285,7 @@ async def show_item_details(callback_query: types.CallbackQuery):
     item_id = item_details_dict.get("id")
     await callback_query.message.edit_text(
         text=tt.item_detail_info(**item_details_dict),
-        reply_markup=create_item_info_buttons(item_id=item_id),
+        reply_markup=create_item_info_buttons(item_id=item_id).as_markup(),
     )
 
 
@@ -298,16 +331,24 @@ async def interact_with_pagination_buttons(
 
     if action == "previous" and "cat" in callback_query.data:
         await show_categories(
-            callback_query=callback_query, page=current_page, new_message=False
+            callback_query=callback_query, page=current_page, new_message=False, state=state
         )
     elif action == "next" and "cat" in callback_query.data:
         await show_categories(
-            callback_query=callback_query, page=current_page, new_message=False
+            callback_query=callback_query, page=current_page, new_message=False, state=state
         )
     elif action == "previous" and "item" in callback_query.data:
         await click_item_pagination(callback_query, page=current_page, state=state)
     elif action == "next" and "item" in callback_query.data:
         await click_item_pagination(callback_query, page=current_page, state=state)
+
+
+step_flag_dict = {
+    1: show_main_menu,
+    2: show_categories,
+    3: show_items_based_on_category,
+    4: show_item_details,
+}
 
 
 async def main():
