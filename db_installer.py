@@ -33,13 +33,39 @@ CREATE_ITEM_TABLE = """
     )
 """
 
+CREATE_CART_TABLE = """
+    CREATE TABLE IF NOT EXISTS "cart" (
+    "id" INTEGER PRIMARY KEY,
+    "user_id" INTEGER UNIQUE,
+    FOREIGN KEY (user_id) REFERENCES user(id)
+    )
+"""
+
+CREATE_CART_ITEM_TABLE = """
+    CREATE TABLE IF NOT EXISTS "cart item" (
+    "id" INTEGER PRIMARY KEY,
+    "cart_id" INTEGER,
+    "item_id" INTEGER,
+    "quantity" INTEGER,
+    FOREIGN KEY (cart_id) REFERENCES cart(id),
+    FOREIGN KEY (item_id) REFERENCES item(id)
+    )
+"""
+
+TABLES_TO_CREATE = [
+    CREATE_USER_TABLE,
+    CREATE_ITEM_CATEGORY_TABLE,
+    CREATE_ITEM_TABLE,
+    CREATE_CART_TABLE,
+    CREATE_CART_ITEM_TABLE,
+]
+
 
 def create_db() -> None:
     with sqlite3.connect("cosmetics_shop.db") as connection:
         cursor = connection.cursor()
-        cursor.execute(CREATE_USER_TABLE)
-        cursor.execute(CREATE_ITEM_CATEGORY_TABLE)
-        cursor.execute(CREATE_ITEM_TABLE)
+        for table in TABLES_TO_CREATE:
+            cursor.execute(table)
         connection.commit()
 
 

@@ -1,17 +1,9 @@
 import os
-import sqlite3
 
-from dotenv import load_dotenv
-
-load_dotenv()
-database_path = os.getenv("DB_PATH")
+from managers.manager import Manager
 
 
-class User:
-    def __init__(self) -> None:
-        self.connection = sqlite3.connect(database_path)
-        self.cursor = self.connection.cursor()
-
+class User(Manager):
     def user_exists(self, telegram_id: int) -> bool:
         result = self.cursor.execute(
             "SELECT telegram_id FROM user WHERE telegram_id = ?", (telegram_id,)
@@ -40,7 +32,9 @@ class User:
             f"""SELECT first_name, last_name, phone_number, reg_date
                 FROM user
                 WHERE telegram_id = ?
-            """, (telegram_id,)).fetchone()
+            """,
+            (telegram_id,),
+        ).fetchone()
         return {
             "first_name": result[0],
             "last_name": result[1],
@@ -53,6 +47,6 @@ class User:
 
 
 if __name__ == "__main__":
-    database_path = os.path.join("..", os.getenv("DB_PATH"))
     user_manager = User()
+    user_manager.database_path = os.path.join("..", os.getenv("DB_PATH"))
     print(user_manager.get_info_for_profile(telegram_id=531131340))
